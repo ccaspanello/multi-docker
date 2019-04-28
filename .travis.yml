@@ -1,0 +1,24 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t ccaspanello/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run ccaspanello/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t ccaspanello/multi-client ./client
+  - docker build -t ccaspanello/multi-nginx ./nginx
+  - docker build -t ccaspanello/multi-server ./server
+  - docker build -t ccaspanello/multi-worker ./worker
+
+  # Login to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # Take those images and push them to docker hub
+  - docker push ccaspanello/multi-client
+  - docker push ccaspanello/multi-nginx
+  - docker push ccaspanello/multi-server
+  - docker push ccaspanello/multi-worker
